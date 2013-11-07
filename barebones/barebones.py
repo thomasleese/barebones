@@ -165,31 +165,31 @@ class Interpreter(object):
         self.filename = filename
         self.variables = { }
 
-    def get_identifier(self, identifier):
+    def get_variable(self, identifier):
         try:
             return self.variables[identifier[1]]
         except KeyError:
             print("Try initialising " + identifier[0] + " first!")
 
-    def set_identifier(self, identifier, value):
+    def set_variable(self, identifier, value):
         self.variables[identifier[1]] = value
 
-    def change_identifier(self, identifier, value):
-        v = self.get_identifier(identifier)
-        self.set_identifier(identifier, v + value)
+    def change_variable(self, identifier, value):
+        v = self.get_variable(identifier)
+        self.set_variable(identifier, v + value)
 
     def run_clear_statement(self, statement):
-        self.set_identifier(statement[1], 0)
+        self.set_variable(statement[1], 0)
 
     def run_incr_statement(self, statement):
-        self.change_identifier(statement[1], 1)
+        self.change_variable(statement[1], +1)
 
     def run_decr_statement(self, statement):
-        self.change_identifier(statement[1], -1)
+        self.change_variable(statement[1], -1)
 
     def run_while_statement(self, statement):
         expr = statement[1][1] # assuming not equal... which it will be in this case
-        while self.get_identifier(expr[1]) != expr[2][1]:
+        while self.get_variable(expr[1]) != expr[2][1]:
             self.run_block(statement[2])
 
     def run_statement(self, statement):
