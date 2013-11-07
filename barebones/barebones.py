@@ -3,6 +3,9 @@ import re
 class CompilerError(Exception):
     pass
 
+class RuntimeError(Exception):
+    pass
+
 class LexicalAnalyser(object):
     rules = [
         ( "KEYWORD", "while|clear|incr|decr|not|do|end" ),
@@ -35,7 +38,7 @@ class LexicalAnalyser(object):
                         pos += len(value)
                         break
                 else:
-                    raise CompilerError("ARGH! You need to fix your code!\n" + substr)
+                    raise CompilerError("Syntax error!\n" + substr)
 
         tokens.append(( "KEYWORD", "end" ))
         tokens.append(( "TERMINATOR", ))
@@ -160,8 +163,51 @@ class SyntaxTree(object):
 class Interpreter(object):
     def __init__(self, filename):
         self.filename = filename
+        self.variables = { }
+
+    def get_identifier(self, identifier):
+        try:
+            return self.variables[identifier[1]]
+        except KeyError:
+            print("Try initialising " + identifier[0] + " first!")
+
+    def set_identifier(self, identifier, value):
+        self.variables[identifier[1]] = value
+
+    def change_identifier(self, identifier, value):
+        v = self.get_identifier(identifier)
+        self.set_identifier(identifier, v + value)
+
+    def run_clear_statement(self, statement):
+        self.set_identifier(statement[1], 0)
+
+    def run_incr_statement(self, statement):
+        self.change_identifier(statement[1], 1)
+
+    def run_decr_statement(self, statement):
+        self.change_identifier(statement[1], -1)
+
+    def run_while_statement(self, statement):
+        expr = statement[1][1] # assuming not equal... which it will be in this case
+        while self.get_identifier(expr[1]) != expr[2][1]:
+            self.run_block(statement[2])
+
+    def run_statement(self, statement):
+        if statement[0] == "CLEAR":
+            self.run_clear_statement(statement)
+        elif statement[0] == "INCR":
+            self.run_incr_statement(statement)
+        elif statement[0] == "DECR":
+            self.run_decr_statement(statement)
+        elif statement[0] == "WHILE":
+            self.run_while_statement(statement)
+
+    def run_block(self, block):
+        for statement in block[1]:
+            self.run_statement(statement)
 
     def run(self):
         tokens = LexicalAnalyser(self.filename).analyse()
         ast = SyntaxTree(tokens).generate()
-        print(ast)
+        self.run_block(ast)
+        print(self.variables)
