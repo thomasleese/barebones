@@ -1,3 +1,3 @@
 # Barebones
 
-A simple python interpreter for the Barebones language.
+A simple python interpreter for an extended Barebones language.

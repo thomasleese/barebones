@@ -8,7 +8,7 @@ class RuntimeError(Exception):
 
 class LexicalAnalyser(object):
     rules = [
-        ( "KEYWORD", "while|clear|incr|decr|do|end" ),
+        ( "KEYWORD", "while|clear|incr|decr|do|end|sub|call|init" ),
         ( "OPERATOR", "not" ),
         ( "TERMINATOR", ";" ),
         ( "IDENTIFIER", "[A-Za-z_]+" ),
@@ -109,7 +109,7 @@ class SyntaxTree(object):
         return self.read_token("OPERATOR")
 
     def is_statement(self):
-        return self.is_keyword([ "clear", "incr", "decr", "while" ])
+        return self.is_keyword([ "clear", "incr", "decr", "while", "sub", "call", "init" ])
 
     def read_statement(self):
         if self.is_keyword([ "clear" ]):
@@ -120,6 +120,12 @@ class SyntaxTree(object):
             return self.read_decr_statement()
         elif self.is_keyword([ "while" ]):
             return self.read_while_statement()
+        elif self.is_keyword([ "sub" ]):
+            return self.read_sub_statement()
+        elif self.is_keyword([ "call" ]):
+            return self.read_call_statement()
+        elif self.is_keyword([ "init" ]):
+            return self.read_init_statement()
         else:
             raise CompilerError("Expected statement, got " + str(token))
 
@@ -148,6 +154,26 @@ class SyntaxTree(object):
         self.read_terminator()
         block = self.read_block()
         return ( "WHILE", expr, block )
+
+    def read_sub_statement(self):
+        self.read_keyword([ "sub" ])
+        identifier = self.read_identifier()
+        self.read_terminator()
+        block = self.read_block()
+        return ( "SUBROUTINE", identifier, block )
+
+    def read_call_statement(self):
+        self.read_keyword([ "call" ])
+        identifier = self.read_identifier()
+        self.read_terminator()
+        return ( "CALL", identifier )
+
+    def read_init_statement(self):
+        self.read_keyword([ "init" ])
+        identifier = self.read_identifier()
+        operand = self.read_operand()
+        self.read_terminator()
+        return ( "INIT", identifier, operand )
 
     def read_block(self):
         statements = [ ]
@@ -180,6 +206,7 @@ class Interpreter(object):
     def __init__(self, filename):
         self.filename = filename
         self.variables = { }
+        self.subroutines = { }
 
     def get_variable(self, identifier):
         try:
@@ -193,6 +220,15 @@ class Interpreter(object):
     def change_variable(self, identifier, value):
         v = self.get_variable(identifier)
         self.set_variable(identifier, v + value)
+
+    def get_subroutine(self, identifier):
+        try:
+            return self.subroutines[identifier[1]]
+        except KeyError:
+            print("Try defining " + identifier[0] + " first!")
+
+    def set_subroutine(self, identifier, block):
+        self.subroutines[identifier[1]] = block
 
     def get_operand(self, operand):
         if operand[1][0] == "IDENTIFIER":
@@ -221,6 +257,18 @@ class Interpreter(object):
         while self.test_expression(statement[1]):
             self.run_block(statement[2])
 
+    def run_subroutine_statement(self, statement):
+        self.set_subroutine(statement[1], statement[2])
+
+    def run_call_statement(self, statement):
+        block = self.get_subroutine(statement[1])
+        self.run_block(block)
+
+    def run_init_statement(self, statement):
+        identifier = statement[1]
+        operand = statement[2]
+        self.set_variable(identifier, self.get_operand(operand))
+
     def run_statement(self, statement):
         if statement[0] == "CLEAR":
             self.run_clear_statement(statement)
@@ -230,6 +278,14 @@ class Interpreter(object):
             self.run_decr_statement(statement)
         elif statement[0] == "WHILE":
             self.run_while_statement(statement)
+        elif statement[0] == "SUBROUTINE":
+            self.run_subroutine_statement(statement)
+        elif statement[0] == "CALL":
+            self.run_call_statement(statement)
+        elif statement[0] == "INIT":
+            self.run_init_statement(statement)
+        else:
+            raise RuntimeError("No such statement " + statement[0])
 
     def run_block(self, block):
         for statement in block[1]:
