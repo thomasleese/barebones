@@ -8,7 +8,8 @@ class RuntimeError(Exception):
 
 class LexicalAnalyser(object):
     rules = [
-        ( "KEYWORD", "while|clear|incr|decr|not|do|end" ),
+        ( "KEYWORD", "while|clear|incr|decr|do|end" ),
+        ( "OPERATOR", "not" ),
         ( "TERMINATOR", ";" ),
         ( "IDENTIFIER", "[A-Za-z_]+" ),
         ( "INTEGER", "[0-9]+" ),
@@ -101,6 +102,12 @@ class SyntaxTree(object):
         else:
             raise CompilerError("Expected one of " + str(types) + ", got " + str(token))
 
+    def is_operator(self):
+        return self.is_token("OPERATOR")
+
+    def read_operator(self):
+        return self.read_token("OPERATOR")
+
     def is_statement(self):
         return self.is_keyword([ "clear", "incr", "decr", "while" ])
 
@@ -151,11 +158,20 @@ class SyntaxTree(object):
         self.read_terminator()
         return ( "BLOCK", statements )
 
+    def read_operand(self):
+        if self.is_identifier():
+            return ( "OPERAND", ( self.read_identifier() ) )
+        else:
+            return ( "OPERAND", ( self.read_integer() ) )
+
+    def read_binary_expression(self):
+        lhs = self.read_operand()
+        op = self.read_operator()
+        rhs = self.read_operand()
+        return ( "EXPRESSION", lhs, op, rhs )
+
     def read_expression(self):
-        identifier = self.read_identifier()
-        self.read_keyword([ "not" ])
-        integer = self.read_integer()
-        return ( "NOT", ( "EQUAL", identifier, integer ) )
+        return self.read_binary_expression()
 
     def generate(self):
         return self.read_block()
@@ -178,6 +194,20 @@ class Interpreter(object):
         v = self.get_variable(identifier)
         self.set_variable(identifier, v + value)
 
+    def get_operand(self, operand):
+        if operand[1][0] == "IDENTIFIER":
+            return self.get_variable(operand[1])
+        else:
+            return operand[1][1]
+
+    def test_expression(self, expr):
+        lhs = self.get_operand(expr[1])
+        op = expr[2][1]
+        rhs = self.get_operand(expr[3])
+
+        if op == "not":
+            return lhs != rhs
+
     def run_clear_statement(self, statement):
         self.set_variable(statement[1], 0)
 
@@ -188,8 +218,7 @@ class Interpreter(object):
         self.change_variable(statement[1], -1)
 
     def run_while_statement(self, statement):
-        expr = statement[1][1] # assuming not equal... which it will be in this case
-        while self.get_variable(expr[1]) != expr[2][1]:
+        while self.test_expression(statement[1]):
             self.run_block(statement[2])
 
     def run_statement(self, statement):
