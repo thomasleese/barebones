@@ -183,9 +183,9 @@ class SyntaxTree(object):
     def read_init_statement(self):
         self.read_keyword([ "init" ])
         identifier = self.read_identifier()
-        operand = self.read_operand()
+        expr = self.read_expression()
         self.read_terminator()
-        return ( "INIT", identifier, operand )
+        return ( "INIT", identifier, expr )
 
     def read_if_statement(self):
         self.read_keyword([ "if" ])
@@ -197,7 +197,7 @@ class SyntaxTree(object):
 
     def read_print_statement(self):
         self.read_keyword([ "print" ])
-        operand = self.read_operand()
+        operand = self.read_expression()
         self.read_terminator()
         return ( "PRINT", operand )
 
@@ -222,10 +222,13 @@ class SyntaxTree(object):
         lhs = self.read_operand()
         op = self.read_operator()
         rhs = self.read_operand()
-        return ( "EXPRESSION", lhs, op, rhs )
+        return ( "BINARY_EXPRESSION", lhs, op, rhs )
 
     def read_expression(self):
-        return self.read_binary_expression()
+        if self.is_string() or self.is_integer():
+            return ( "UNARY_EXPRESSION", self.read_operand() )
+        else:
+            return self.read_binary_expression()
 
     def generate(self):
         return self.read_block()
@@ -264,17 +267,20 @@ class Interpreter(object):
         else:
             return operand[1][1]
 
-    def test_expression(self, expr):
-        lhs = self.get_operand(expr[1])
-        op = expr[2][1]
-        rhs = self.get_operand(expr[3])
+    def eval_expression(self, expr):
+        if expr[0] == "BINARY_EXPRESSION":
+            lhs = self.get_operand(expr[1])
+            op = expr[2][1]
+            rhs = self.get_operand(expr[3])
 
-        if op == "not":
-            return lhs != rhs
-        elif op == "==":
-            return lhs == rhs
+            if op == "not":
+                return lhs != rhs
+            elif op == "==":
+                return lhs == rhs
+            else:
+                raise RuntimeError("No such operator! " + op)
         else:
-            raise RuntimeError("No such operator! " + op)
+            return self.get_operand(expr[1])
 
     def run_clear_statement(self, statement):
         self.set_variable(statement[1], 0)
@@ -286,7 +292,7 @@ class Interpreter(object):
         self.change_variable(statement[1], -1)
 
     def run_while_statement(self, statement):
-        while self.test_expression(statement[1]):
+        while self.eval_expression(statement[1]):
             self.run_block(statement[2])
 
     def run_subroutine_statement(self, statement):
@@ -298,15 +304,15 @@ class Interpreter(object):
 
     def run_init_statement(self, statement):
         identifier = statement[1]
-        operand = statement[2]
-        self.set_variable(identifier, self.get_operand(operand))
+        expr = statement[2]
+        self.set_variable(identifier, self.eval_expression(expr))
 
     def run_if_statement(self, statement):
-        if self.test_expression(statement[1]):
+        if self.eval_expression(statement[1]):
             self.run_block(statement[2])
 
     def run_print_statement(self, statement):
-        print(self.get_operand(statement[1]))
+        print(self.eval_expression(statement[1]))
 
     def run_statement(self, statement):
         if statement[0] == "CLEAR":

@@ -2,6 +2,7 @@ sub multiply;
     if X == 5 then;
         if Y == 13107 then;
             print "HELLO";
+            print X == 5;
         end;
     end;
 
