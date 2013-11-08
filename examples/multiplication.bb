@@ -6,10 +6,20 @@ sub cls;
     end;
 end;
 
-sub multiply;
+sub show_input;
     print "Your input was:";
     print X;
     print Y;
+end;
+
+sub show_output;
+    print "And the output was:";
+    print Z;
+end;
+
+sub slow_multiply;
+    print "Slow method:";
+    call show_input;
 
     clear Z;
 
@@ -29,21 +39,27 @@ sub multiply;
 
         decr X;
     end;
+
+    call show_output;
+end;
+
+sub sensible_multiply;
+    print "Sensible method:";
+    call show_input;
+    
+    init Z X * Y;
+
+    call show_output;
 end;
 
 call cls;
 
-print "Slow method:";
 init X 1 + 4;
 init Y 13107 * 1;
-call multiply;
-print "And the output is:";
-print Z;
+call slow_multiply;
 
 print "";
 
-print "Sensible method:";
 init X 1 + 4;
 init Y 13107 * 1;
-print "The output is:";
-print X * Y;
+call sensible_multiply;
