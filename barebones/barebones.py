@@ -9,11 +9,11 @@ class RuntimeError(Exception):
 class LexicalAnalyser(object):
     rules = [
         ( "KEYWORD", "while|clear|incr|decr|do|end|sub|call|init|print|if|then|print" ),
-        ( "OPERATOR", "not|!=|==" ),
+        ( "OPERATOR", "not|!=|==|\\*|\\+|\\-|/" ),
         ( "TERMINATOR", ";" ),
         ( "IDENTIFIER", "[A-Za-z_]+" ),
         ( "INTEGER", "[0-9]+" ),
-        ( "STRING", "\"[^\"]+\"" ),
+        ( "STRING", "\"[^\"]*\"" ),
         ( None, "[ \n\r\t]" ),
     ]
 
@@ -225,7 +225,11 @@ class SyntaxTree(object):
         return ( "BINARY_EXPRESSION", lhs, op, rhs )
 
     def read_expression(self):
-        if self.is_string() or self.is_integer():
+        self.index += 1
+        t = self.is_terminator()
+        self.index -= 1
+
+        if t:
             return ( "UNARY_EXPRESSION", self.read_operand() )
         else:
             return self.read_binary_expression()
@@ -277,6 +281,14 @@ class Interpreter(object):
                 return lhs != rhs
             elif op == "==":
                 return lhs == rhs
+            elif op == "+":
+                return lhs + rhs
+            elif op == "-":
+                return lhs - rhs
+            elif op == "*":
+                return lhs * rhs
+            elif op == "/":
+                return lhs / rhs
             else:
                 raise RuntimeError("No such operator! " + op)
         else:
@@ -344,4 +356,3 @@ class Interpreter(object):
         tokens = LexicalAnalyser(self.filename).analyse()
         ast = SyntaxTree(tokens).generate()
         self.run_block(ast)
-        print(self.variables)

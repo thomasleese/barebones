@@ -1,10 +1,7 @@
 sub multiply;
-    if X == 5 then;
-        if Y == 13107 then;
-            print "HELLO";
-            print X == 5;
-        end;
-    end;
+    print "Your input was:";
+    print X;
+    print Y;
 
     clear Z;
 
@@ -26,6 +23,10 @@ sub multiply;
     end;
 end;
 
-init X 5;
+init X 1 + 4;
 init Y 13107;
 call multiply;
+
+print "";
+print "And the output is:";
+print Z;
