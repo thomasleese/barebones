@@ -1,3 +1,11 @@
+sub cls;
+    init i 50;
+    while i not 0 do;
+        print "";
+        decr i;
+    end;
+end;
+
 sub multiply;
     print "Your input was:";
     print X;
@@ -23,10 +31,19 @@ sub multiply;
     end;
 end;
 
-init X 1 + 4;
-init Y 13107;
-call multiply;
+call cls;
 
-print "";
+print "Slow method:";
+init X 1 + 4;
+init Y 13107 * 1;
+call multiply;
 print "And the output is:";
 print Z;
+
+print "";
+
+print "Sensible method:";
+init X 1 + 4;
+init Y 13107 * 1;
+print "The output is:";
+print X * Y;
