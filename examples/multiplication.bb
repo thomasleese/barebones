@@ -1,4 +1,10 @@
 sub multiply;
+    if X == 5 then;
+        if Y == 13107 then;
+            print "HELLO";
+        end;
+    end;
+
     clear Z;
 
     while X not 0 do;

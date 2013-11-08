@@ -8,12 +8,13 @@ class RuntimeError(Exception):
 
 class LexicalAnalyser(object):
     rules = [
-        ( "KEYWORD", "while|clear|incr|decr|do|end|sub|call|init" ),
-        ( "OPERATOR", "not" ),
+        ( "KEYWORD", "while|clear|incr|decr|do|end|sub|call|init|print|if|then|print" ),
+        ( "OPERATOR", "not|!=|==" ),
         ( "TERMINATOR", ";" ),
         ( "IDENTIFIER", "[A-Za-z_]+" ),
         ( "INTEGER", "[0-9]+" ),
-        ( None, "[ \n\r]" )
+        ( "STRING", "\"[^\"]+\"" ),
+        ( None, "[ \n\r\t]" ),
     ]
 
     def __init__(self, filename):
@@ -88,6 +89,13 @@ class SyntaxTree(object):
         token = self.read_token("INTEGER")
         return ( token[0], int(token[1]) )
 
+    def is_string(self):
+        return self.is_token("STRING")
+
+    def read_string(self):
+        token = self.read_token("STRING")
+        return ( token[0], token[1][1:-1] )
+
     def is_keyword(self, types):
         token = self.tokens[self.index]
         if self.is_token("KEYWORD"):
@@ -109,7 +117,7 @@ class SyntaxTree(object):
         return self.read_token("OPERATOR")
 
     def is_statement(self):
-        return self.is_keyword([ "clear", "incr", "decr", "while", "sub", "call", "init" ])
+        return self.is_keyword([ "clear", "incr", "decr", "while", "sub", "call", "init", "if", "print" ])
 
     def read_statement(self):
         if self.is_keyword([ "clear" ]):
@@ -126,6 +134,10 @@ class SyntaxTree(object):
             return self.read_call_statement()
         elif self.is_keyword([ "init" ]):
             return self.read_init_statement()
+        elif self.is_keyword([ "if" ]):
+            return self.read_if_statement()
+        elif self.is_keyword([ "print" ]):
+            return self.read_print_statement()
         else:
             raise CompilerError("Expected statement, got " + str(token))
 
@@ -175,6 +187,20 @@ class SyntaxTree(object):
         self.read_terminator()
         return ( "INIT", identifier, operand )
 
+    def read_if_statement(self):
+        self.read_keyword([ "if" ])
+        expr = self.read_expression()
+        self.read_keyword([ "then" ])
+        self.read_terminator()
+        block = self.read_block()
+        return ( "IF", expr, block )
+
+    def read_print_statement(self):
+        self.read_keyword([ "print" ])
+        operand = self.read_operand()
+        self.read_terminator()
+        return ( "PRINT", operand )
+
     def read_block(self):
         statements = [ ]
         while self.is_statement():
@@ -186,9 +212,11 @@ class SyntaxTree(object):
 
     def read_operand(self):
         if self.is_identifier():
-            return ( "OPERAND", ( self.read_identifier() ) )
+            return ( "OPERAND", self.read_identifier() )
+        elif self.is_string():
+            return ( "OPERAND", self.read_string() )
         else:
-            return ( "OPERAND", ( self.read_integer() ) )
+            return ( "OPERAND", self.read_integer() )
 
     def read_binary_expression(self):
         lhs = self.read_operand()
@@ -243,6 +271,10 @@ class Interpreter(object):
 
         if op == "not":
             return lhs != rhs
+        elif op == "==":
+            return lhs == rhs
+        else:
+            raise RuntimeError("No such operator! " + op)
 
     def run_clear_statement(self, statement):
         self.set_variable(statement[1], 0)
@@ -269,6 +301,13 @@ class Interpreter(object):
         operand = statement[2]
         self.set_variable(identifier, self.get_operand(operand))
 
+    def run_if_statement(self, statement):
+        if self.test_expression(statement[1]):
+            self.run_block(statement[2])
+
+    def run_print_statement(self, statement):
+        print(self.get_operand(statement[1]))
+
     def run_statement(self, statement):
         if statement[0] == "CLEAR":
             self.run_clear_statement(statement)
@@ -284,6 +323,10 @@ class Interpreter(object):
             self.run_call_statement(statement)
         elif statement[0] == "INIT":
             self.run_init_statement(statement)
+        elif statement[0] == "IF":
+            self.run_if_statement(statement)
+        elif statement[0] == "PRINT":
+            self.run_print_statement(statement)
         else:
             raise RuntimeError("No such statement " + statement[0])
 
