@@ -1,11 +1,3 @@
-sub cls;
-    init i 50;
-    while i not 0 do;
-        print "";
-        decr i;
-    end;
-end;
-
 sub show_input;
     print "Your input was:";
     print X;
@@ -51,8 +43,6 @@ sub sensible_multiply;
 
     call show_output;
 end;
-
-call cls;
 
 init X 1 + 4;
 init Y 13107 * 1;

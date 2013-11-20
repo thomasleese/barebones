@@ -21,7 +21,7 @@ class LexicalAnalyser(object):
         self.filename = filename
 
     def analyse(self):
-        tokens = []
+        tokens = [ ]
 
         with open(self.filename) as fd:
             buffer = fd.read()
