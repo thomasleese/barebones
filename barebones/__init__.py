@@ -1,3 +1,4 @@
+import argparse
 import re
 
 class CompilerError(Exception):
@@ -356,3 +357,11 @@ class Interpreter(object):
         tokens = LexicalAnalyser(self.filename).analyse()
         ast = SyntaxTree(tokens).generate()
         self.run_block(ast)
+
+def main():
+    parser = argparse.ArgumentParser(description = "Barebones Interpreter.")
+    parser.add_argument("files", type = str, nargs = "+", help = "Barebones files")
+    args = parser.parse_args()
+
+    for filename in args.files:
+        Interpreter(filename).run()

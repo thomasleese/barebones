@@ -1,7 +1,11 @@
 # Barebones
 
-A simple python interpreter for an extended Barebones language.
+_A simple python interpreter for an extended Barebones language._
+
+# Installation
+
+    python3 setup.py install
 
 # Usage
 
-    ./barebones/main.py examples/*
+    barebones examples/*
