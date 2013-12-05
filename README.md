@@ -2,10 +2,10 @@
 
 _A simple python interpreter for an extended Barebones language._
 
-# Installation
+## Installation
 
     python3 setup.py install
 
-# Usage
+## Usage
 
     barebones examples/*
