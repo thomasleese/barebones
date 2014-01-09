@@ -4,8 +4,9 @@ _A simple python interpreter for an extended Barebones language._
 
 ## Installation
 
-    python3 setup.py install
+    $ python3 setup.py install
 
 ## Usage
 
-    barebones examples/*
+    $ barebones examples/*
+
