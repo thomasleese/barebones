@@ -1,6 +1,6 @@
 # Barebones
 
-_A simple python interpreter for an extended Barebones language._
+_Interpreter for an extended Barebones language written in Python._
 
 ## Installation
 
@@ -9,4 +9,3 @@ _A simple python interpreter for an extended Barebones language._
 ## Usage
 
     $ barebones examples/*
-

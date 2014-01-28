@@ -1,0 +1,2 @@
+import barebones
+barebones.main()
